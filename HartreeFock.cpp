@@ -143,8 +143,6 @@ void HartreeFock::Set_Fock(){
                     jl = INDEX(j,l);
                     ikjl = INDEX(ik,jl);
                     
-                    cout << " i = " << i << " j = " << j << " k = " << k << " l = " << l << " TEI[ijkl] = " << TEI[ijkl] << endl;
-                    
                     F0(i,j) += D0(k,l) * (2.0 * TEI[ijkl] - TEI[ikjl]);
                 }
             }

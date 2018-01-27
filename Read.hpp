@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <cstdio>
+#include <cassert>
 #include "Eigen/Dense"
 #include "Eigen/Core"
 
@@ -27,5 +28,8 @@ class READIN {
       static void val(const char *filename, double *val);
       static void SymMatrix(const char *filename, Matrix *M);
       static void Mulliken(const char *filename, MullikenMatrix *TEI);
+    
+    private:
+      static void Test_Mulliken(MullikenMatrix *TEI);
 
 };
