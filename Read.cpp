@@ -30,6 +30,10 @@ void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
   int i, j, k, l, ij, kl, ji, lk;
   double val;
 
+  for (int i = 0; i < (*TEI).size(); i ++){
+      (*TEI)(i) = FILLER;
+  }
+    
   while(fscanf(input, "%d %d %d %d %lf", &i, &j, &k, &l, &val) != EOF) {
 
     ij = INDEX(i-1,j-1);

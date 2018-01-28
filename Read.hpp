@@ -13,6 +13,7 @@
 #define NUM_ELEC 10
 #define NUM_OCC NUM_ELEC/2
 #define NUM_MUL 406
+#define FILLER 999
 
 inline int INDEX(int i, int j) {
   return ((i>j) ? (((i)*((i)+1)/2)+(j)) : (((j)*((j)+1)/2)+(i)));
