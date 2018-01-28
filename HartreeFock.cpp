@@ -9,29 +9,28 @@
 
 #include "HartreeFock.hpp"
 #include "Read.hpp"
-#include <fstream>
 
 using namespace std;
 
 HartreeFock::HartreeFock(double tol_dens, double tol_e){
-
+    
     READIN::val("data/enuc.dat", &enuc);
     READIN::SymMatrix("data/overlap.dat",  &S);
     READIN::SymMatrix("data/kinetic.dat", &T);
     READIN::SymMatrix("data/anuc.dat", &V);
     READIN::Mulliken("data/eri.dat", &TEI);
-
+    
     Hcore = T + V;
-
+    
     SymmetricOrth();              // Symmetric Orthogalization Matrix
     Set_InitialFock();                // Build Initial Guess Fock Matrix
     Set_DensityMatrix();              // Build Initial Density Matrix using occupied MOs
     Set_Energy();                  // Compute the Initial SCF Energy
-
+        
 }
 
 void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs) {
-
+    
     Eigen::SelfAdjointEigenSolver<Matrix> solver(*M);
     *evecs = solver.eigenvectors();
     Vector evals_vec = solver.eigenvalues();
@@ -47,27 +46,28 @@ void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs) {
 }
 
 void HartreeFock::print_state() {
-
+    
     cout << "Nuclear repulsion energy = \n" << enuc << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Overlap Integrals: \n" << S << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Kinetic-Energy Integrals: \n" << T << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Nuclear Attraction Integrals: \n" << V << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Core Hamiltonian: \n" << Hcore << endl;
-    cout << "--------------------------------------" << endl;
     cout << "S^-1/2 Matrix: \n" << SOM << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Initial F' Matrix: \n" << F0 << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Initial C Matrix: \n" << C0 << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Initial Density Matrix: \n" << D0 << endl;
-    cout << "--------------------------------------" << endl;
     cout << "Initial Energy: \n" << etot << endl;
-    cout << "--------------------------------------" << endl;
+    
+    /**cout << "Two Electron Integrals"  << endl;
+    for (int i = 0; i < NUM_ORB; i++) {
+        for (int j = 0; j < i; j++) {
+            for (int k = 0; k < j; k++) {
+                for (int l = 0; l < k; l++) {
+                    cout << i << "\t" << j << "\t" << k << "\t" << l << "\t" << TEI[INDEX(INDEX(i,j),INDEX(k,l))] << endl;
+                }
+            }
+        }
+    }**/
 }
 
 bool HartreeFock::EConverg(){
@@ -100,63 +100,50 @@ void HartreeFock::Set_Energy() {
 }
 
 void HartreeFock::Iterate(){
-
+    
     int it = 0;
-    cout << "Iter\t" << "E(elec)\t" << "E(tot)\t" << "Delta(E)\t" << "RMS(D)\t" << endl;
+    cout << "Iteration\t" << "E(elec)\t" << "E(tot)\t" << "Delta(E)\t" << "RMS(D)\t" << endl;
     do {
-
         // Copy to check for convergence
         for (int i = 0; i < NUM_ORB; i++) {
             for (int j = 0; j < NUM_ORB; j++) {
                 prev_D0(i,j) = D0(i,j);
             }
         }
-
+        
         prev_etot = etot;
-
         Set_Fock();
-        cout << "--------------------------------------" << endl;
-        cout << "New F' Matrix: \n" << F0 << endl;
-        cout << "--------------------------------------" << endl;
-
         Set_DensityMatrix();
-        cout << "--------------------------------------" << endl;
-        cout << "New D' Matrix: \n" << D0 << endl;
-        cout << "--------------------------------------" << endl;
-
         Set_Energy();
-        cout << "--------------------------------------" << endl;
+        
         cout << it << "\t" << eelec << "\t" << etot << "\t" << delE << "\t" << rmsD << endl;
-
+        
         it ++;
     }
-    while (not (EConverg() && DensConverg()) && it < 2) ;
+    while (not (EConverg() && DensConverg()) && it < 10) ;
 }
 
 void HartreeFock::Set_Fock(){
-
+    
     int ijkl, ikjl;
     int ij, kl, ik, jl;
-
+    
     for(int i=0; i < NUM_ORB; i++) {
         for(int j=0; j < NUM_ORB; j++) {
-
+            
             F0(i,j) = Hcore(i,j);
-
+            
             for(int k=0; k < NUM_ORB; k++) {
                 for(int l=0; l < NUM_ORB; l++) {
-
-                    if (TEI[i][j][k][l] == FILLER) {
-                        cout << "FILLER VALUE USED AT " << i << j << k << l << endl;
-                        exit(-1);
-                    }
-
-                    if (TEI[i][k][j][l] == FILLER){
-                        cout << "FILLER VALUE USED AT " << i << k << j << l << endl;
-                        exit(-1);
-                    }
-
-                    F0(i,j) += D0(k,l) * (2.0 * (TEI[i][j][k][l] - TEI[i][k][j][l]));
+                    
+                    ij = INDEX(i,j);
+                    kl = INDEX(k,l);
+                    ijkl = INDEX(ij,kl);
+                    ik = INDEX(i,k);
+                    jl = INDEX(j,l);
+                    ikjl = INDEX(ik,jl);
+                    
+                    F0(i,j) += D0(k,l) * (2.0 * TEI[ijkl] - TEI[ikjl]);
                 }
             }
         }
@@ -167,15 +154,15 @@ void HartreeFock::SymmetricOrth() {
     // Diagonlizes S, such that S^-1/2 can be easily
     // calculated as L * U^-1/2 * L where L are the
     // evecs and U is the diagonal eigenvalue matrix
-
+    
     Matrix eval;
     Matrix evec;
     Diagonlize(&S, &eval, &evec);
-
+    
     for(int i=0; i < NUM_ORB; i++) {
         eval(i,i) = pow(eval(i,i),-0.5);
     }
-
+    
     SOM = evec * eval * evec.transpose();
 }
 
@@ -189,10 +176,10 @@ void HartreeFock::Set_InitialFock(){
 void HartreeFock::Set_DensityMatrix(){
     // Builds the density matrix from the occupied MOs
     // By summing over all the occupied spatial MOs
-
+    
     Diagonlize(&F0, &e0, &C0);      // Diagonlize Fock Matrix
     C0 = SOM*C0;                    // Transform eigenvectors onto original non orthogonal AO basis
-
+    
     double M;
     for (int i = 0; i < NUM_ORB; i++){
         for (int j = 0; j < NUM_ORB; j++){
@@ -204,3 +191,4 @@ void HartreeFock::Set_DensityMatrix(){
         }
     }
 }
+
