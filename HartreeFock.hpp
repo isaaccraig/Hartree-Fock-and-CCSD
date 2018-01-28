@@ -32,6 +32,11 @@ public:
     double enuc;
     double tol_dens;
     double tol_e;
+
+    double mu_x, mu_y, mu_z;
+
+    double tot_dip_moment;
+    double q0, q1, q2;
     
     Matrix S;
     Matrix T;
