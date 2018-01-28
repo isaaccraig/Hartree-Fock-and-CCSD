@@ -112,18 +112,23 @@ void sto_3g_water::test4(void)
 void sto_3g_water::test5(void)
 {
 	cout << "Running Test 5." << endl;
-	cout << "Running test4: Checking Initial Density Matrix..." << endl;
+	cout << "Running test5: Checking Initial Fock Matrix..." << endl;
 	MatrixXd test(7, 7);
 	readMatrix2d("data/fock_t.dat", &test);
 	reflectMatrix2d(&test, 1);
 	if(!test.isApprox( hfTestObj->F0, 1e-5 ))
 		printErr( (char*) "Inital fock matrix is not correct...", test, hfTestObj->F0 );
-	cout << "Test 5 passed." << endl << endl;
 
-	cout << "Running test4: Checking Initial MO Matrix..." << endl;
+	cout << "Running test5: Checking Initial MO Matrix..." << endl;
 	readMatrix2d("data/mo_i.dat", &test);
 	if(!test.isApprox( hfTestObj->C0, 1e-5 ))
 		printErr( (char*) "Inital MO matrix is not correct...", test, hfTestObj->C0 );
+
+	cout << "Running test5: Checking Initial Density Matrix..." << endl;
+	readMatrix2d("data/dens_i.dat", &test);
+	reflectMatrix2d(&test, 1);
+	if(!test.isApprox( hfTestObj->D0, 1e-5 ))
+		printErr( (char*) "Inital MO matrix is not correct...", test, hfTestObj->D0 );
 
 	cout << "Test 5 passed." << endl << endl;
 }
