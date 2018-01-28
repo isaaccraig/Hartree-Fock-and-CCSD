@@ -140,7 +140,17 @@ void sto_3g_water::test6(void)
 {
 	cout << "Running Test 6." << endl;
 	cout << "Running test6: Checking Initial SCF..." << endl;
-	assert( abs( hfTestObj->etot - 125.842077437699 ) < 1e-5 );
+	if( abs( hfTestObj->eelec - 125.842077437699 ) > 1e-5 )
+	{
+		cout << "Initial electron energy is incorrect, should be " << -125.842077437699 << ", but yours is " << hfTestObj->eelec << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->etot - 117.839710375888 ) > 1e-5 )
+	{
+		cout << "Initial total energy is incorrect, should be " << -117.839710375888 << ", but yours is " << hfTestObj->etot << "." << endl;
+		assert(false);
+	}
 	cout << "Test 6 passed. " << endl << endl;
 }
 
