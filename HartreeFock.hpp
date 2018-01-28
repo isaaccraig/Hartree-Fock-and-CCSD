@@ -44,7 +44,7 @@ public:
     Matrix e0;
     Matrix D0;
     Matrix prev_D0;
-    MullikenMatrix TEI;
+    double TEI[NUM_ORB][NUM_ORB][NUM_ORB][NUM_ORB];
     
     double eelec;
     double etot;

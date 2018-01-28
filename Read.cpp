@@ -24,73 +24,69 @@ void READIN::SymMatrix(const char *filename, Matrix *M) {
   fclose(input);
 }
 
-void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
+void READIN::Mulliken(const char *filename, double (*TEI)[NUM_ORB][NUM_ORB][NUM_ORB][NUM_ORB]){
+
   FILE *input;
   input = fopen(filename, "r");
-  int i, j, k, l, ij, kl, ji, lk;
+  int i, j, k, l;
   double val;
+
+  for (int i = 0; i < NUM_ORB; i++) {
+      for (int j = 0; j < NUM_ORB; j++) {
+          for (int k = 0; k < NUM_ORB; k++) {
+              for (int l = 0; l < NUM_ORB; l++) {
+                  (*TEI)[i][j][k][l] = FILLER;
+              }
+          }
+      }
+  }
+
 
   while(fscanf(input, "%d %d %d %d %lf", &i, &j, &k, &l, &val) != EOF) {
 
-    ij = INDEX(i-1,j-1);
-    kl = INDEX(k-1,l-1);
-    ji = INDEX(j-1,i-1);
-    lk = INDEX(l-1,k-1);
-      
- /**
-    if (ijkl > (*TEI).size()) {
-        cout << "Error : Matrix Size Exceded" << endl;
-        cout << (*TEI).size() << " = size" << endl;
-        cout << ijkl << " = index" << endl;
-        exit(-1);
-    } **/
-      
-    (*TEI)(INDEX(ij,kl)) = val;
-    (*TEI)(INDEX(ji,kl)) = val;
-    (*TEI)(INDEX(ij,lk)) = val;
-    (*TEI)(INDEX(ji,lk)) = val;
-    (*TEI)(INDEX(kl,ij)) = val;
-    (*TEI)(INDEX(kl,ji)) = val;
-    (*TEI)(INDEX(lk,ji)) = val;
-    (*TEI)(INDEX(lk,ij)) = val;
-      
+    i--;
+    j--;
+    k--;
+    l--;
+
+    (*TEI)[i][j][k][l] = val;
+    (*TEI)[j][i][k][l] = val;
+    (*TEI)[i][j][l][k] = val;
+    (*TEI)[j][i][l][k] = val;
+
+    (*TEI)[k][l][i][j] = val;
+    (*TEI)[k][l][j][i] = val;
+    (*TEI)[l][k][i][j] = val;
+    (*TEI)[l][k][j][i] = val;
+
   }
   fclose(input);
 }
 
-void READIN::Test_Mulliken(MullikenMatrix *TEI) {
-    
-    int ij, ji, kl, lk;
+void READIN::Test_Mulliken(double (*TEI)[NUM_ORB][NUM_ORB][NUM_ORB][NUM_ORB]) {
+
     bool val;
-    
+
     for (int i = 0; i < NUM_ORB ; i++) {
         for (int j = 0; j < NUM_ORB ; j++) {
             for (int k = 0; k < NUM_ORB ; k++) {
                 for (int l = 0; l < NUM_ORB ; l++) {
-                    
-                    ij = INDEX(i,j);
-                    ji = INDEX(j,i);
-                    kl = INDEX(k,l);
-                    lk = INDEX(l,k);
-                    
-                    val = ((*TEI)(INDEX(ij,kl)) ==
-                           (*TEI)(INDEX(ji,kl)) ==
-                           (*TEI)(INDEX(ij,lk)) ==
-                           (*TEI)(INDEX(ji,lk)) ==
-                           (*TEI)(INDEX(kl,ij)) ==
-                           (*TEI)(INDEX(kl,ji)) ==
-                           (*TEI)(INDEX(lk,ji)) ==
-                           (*TEI)(INDEX(lk,ij)));
-                    
+
+                  val = ( (*TEI)[i][j][k][l] ==
+                          (*TEI)[j][i][k][l] ==
+                          (*TEI)[i][j][l][k] ==
+                          (*TEI)[j][i][l][k] ==
+                          (*TEI)[k][l][i][j] ==
+                          (*TEI)[k][l][j][i] ==
+                          (*TEI)[l][k][i][j] ==
+                          (*TEI)[l][k][j][i]);
+
                     if (!val) {
                         cout << "MULIKEN FAILED" << endl;
-                        cout << ij << " " << ji << " " << kl << " " << lk << " " <<endl;
                         exit(-1);
                     }
                 }
             }
         }
     }
-    
 }
-
