@@ -18,6 +18,7 @@ public:
     void test4(void);
     void test5(void);
     void test6(void);
+    void test7(void);
 private:
     HartreeFock* hfTestObj;
 };
@@ -140,7 +141,20 @@ void sto_3g_water::test6(void)
 	cout << "Running Test 6." << endl;
 	cout << "Running test6: Checking Initial SCF..." << endl;
 	assert( abs( hfTestObj->etot - 125.842077437699 ) < 1e-5 );
-	cout << "Test 6 passed. " << endl;
+	cout << "Test 6 passed. " << endl << endl;
+}
+
+//Test 7 - Testing New Fock Matrix
+void sto_3g_water::test7(void)
+{
+	cout << "Running Test 7." << endl;
+	cout << "Running test7: Checking New Fock Matrix..." << endl;
+	MatrixXd test(7, 7);
+	readMatrix2d("data/fock_n.dat", &test);
+	reflectMatrix2d(&test, 1);
+	if(!test.isApprox( hfTestObj->F0, 1e-5 ))
+		printErr( (char*) "New Fock matrix is not correct...", test, hfTestObj->F0 );
+	cout << "Test 7 passed. " << endl << endl;
 }
 
 /* --- Create and destroy new test constructs. --- */
@@ -165,6 +179,7 @@ int main(int argc, char* argv[])
 	tester.test4();
 	tester.test5();
 	tester.test6();
+	tester.test7();
 
 	cout << "Tests passed." << endl;
 	return 0;
