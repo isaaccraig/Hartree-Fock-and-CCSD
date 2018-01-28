@@ -19,6 +19,7 @@ public:
     void test5(void);
     void test6(void);
     void test7(void);
+    void test8(void);
 private:
     HartreeFock* hfTestObj;
 };
@@ -135,36 +136,97 @@ void sto_3g_water::test5(void)
 	cout << "Test 5 passed." << endl << endl;
 }
 
-//Test 6 - Testing Initial SCF
+//Test 6 - Testing New Fock Matrix
 void sto_3g_water::test6(void)
 {
 	cout << "Running Test 6." << endl;
-	cout << "Running test6: Checking Initial SCF..." << endl;
-	if( abs( hfTestObj->eelec - 125.842077437699 ) > 1e-5 )
-	{
-		cout << "Initial electron energy is incorrect, should be " << -125.842077437699 << ", but yours is " << hfTestObj->eelec << "." << endl;
-		assert(false);
-	}
-
-	if( abs( hfTestObj->etot - 117.839710375888 ) > 1e-5 )
-	{
-		cout << "Initial total energy is incorrect, should be " << -117.839710375888 << ", but yours is " << hfTestObj->etot << "." << endl;
-		assert(false);
-	}
-	cout << "Test 6 passed. " << endl << endl;
-}
-
-//Test 7 - Testing New Fock Matrix
-void sto_3g_water::test7(void)
-{
-	cout << "Running Test 7." << endl;
-	cout << "Running test7: Checking New Fock Matrix..." << endl;
+	cout << "Running test6: Checking New Fock Matrix..." << endl;
 	MatrixXd test(7, 7);
 	readMatrix2d("data/fock_n.dat", &test);
 	reflectMatrix2d(&test, 1);
 	if(!test.isApprox( hfTestObj->F0, 1e-5 ))
 		printErr( (char*) "New Fock matrix is not correct...", test, hfTestObj->F0 );
+	cout << "Test 6 passed. " << endl << endl;
+}
+
+//Test 7 - Testing Final Energies
+void sto_3g_water::test7(void)
+{
+	cout << "Running Test 7." << endl;
+	cout << "Running test7: Checking Final energies..." << endl;
+	double e_elec = -82.944446990003;
+	double e_tot = -74.942079928192;
+	if( abs( hfTestObj->eelec - e_elec ) > 1e-5 )
+	{
+		cout << "Initial electron energy is incorrect, should be " << e_elec << ", but yours is " << hfTestObj->eelec << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->etot - e_tot ) > 1e-5 )
+	{
+		cout << "Initial total energy is incorrect, should be " << e_tot << ", but yours is " << hfTestObj->etot << "." << endl;
+		assert(false);
+	}
 	cout << "Test 7 passed. " << endl << endl;
+}
+
+//Test 8 - Testing Final Values
+void sto_3g_water::test8(void)
+{
+	cout << "Running Test 8." << endl;
+	cout << "Running test8: Checking final values..." << endl;
+
+	double mu_x = 0.000000000000;
+	double mu_y = 0.603521296525;
+	double mu_z = mu_x;
+	double dm_tot = 0.603521296525;
+	double q0 = -0.253146052405;
+	double q1 = 0.126573026202;
+	double q2 = q1;
+
+	if( abs( hfTestObj->mu_x - mu_x ) > 1e-5 )
+	{
+		cout << "Mu_x is incorrect, should be " << mu_x << ", but yours is " << hfTestObj->mu_x << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->mu_y - mu_y ) > 1e-5 )
+	{
+		cout << "Mu_y is incorrect, should be " << mu_y << ", but yours is " << hfTestObj->mu_y << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->mu_z - mu_z ) > 1e-5 )
+	{
+		cout << "Mu_z is incorrect, should be " << mu_z << ", but yours is " << hfTestObj->mu_z << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->tot_dip_moment - dm_tot ) > 1e-5 )
+	{
+		cout << "Total dipole moment is incorrect, should be " << dm_tot << ", but yours is " << hfTestObj->tot_dip_moment << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->q0 - q0 ) > 1e-5 )
+	{
+		cout << "Atom 0 charge is incorrect, should be " << q0 << ", but yours is " << hfTestObj->q0 << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->q1 - q1 ) > 1e-5 )
+	{
+		cout << "Atom 1 charge is incorrect, should be " << q1 << ", but yours is " << hfTestObj->q1 << "." << endl;
+		assert(false);
+	}
+
+	if( abs( hfTestObj->q2 - q2 ) > 1e-5 )
+	{
+		cout << "Atom 2 charge is incorrect, should be " << q2 << ", but yours is " << hfTestObj->q2 << "." << endl;
+		assert(false);
+	}
+
+	cout << "Test 8 passed. " << endl << endl;
 }
 
 /* --- Create and destroy new test constructs. --- */
@@ -190,6 +252,7 @@ int main(int argc, char* argv[])
 	tester.test5();
 	tester.test6();
 	tester.test7();
+	tester.test8();
 
 	cout << "Tests passed." << endl;
 	return 0;
