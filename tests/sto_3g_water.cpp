@@ -17,6 +17,7 @@ public:
     void test3(void);
     void test4(void);
     void test5(void);
+    void test6(void);
 private:
     HartreeFock* hfTestObj;
 };
@@ -133,6 +134,15 @@ void sto_3g_water::test5(void)
 	cout << "Test 5 passed." << endl << endl;
 }
 
+//Test 6 - Testing Initial SCF
+void sto_3g_water::test6(void)
+{
+	cout << "Running Test 6." << endl;
+	cout << "Running test6: Checking Initial SCF..." << endl;
+	assert( abs( hfTestObj->etot - 125.842077437699 ) < 1e-5 );
+	cout << "Test 6 passed. " << endl;
+}
+
 /* --- Create and destroy new test constructs. --- */
 sto_3g_water::sto_3g_water(double tol_e, double tol_dens)
 {
@@ -148,11 +158,14 @@ void sto_3g_water::destroy(void)
 int main(int argc, char* argv[])
 {
 	sto_3g_water tester( 0.01, 0.01 );
+
 	tester.test1();
 	tester.test2();
 	tester.test3();
 	tester.test4();
 	tester.test5();
+	tester.test6();
+
 	cout << "Tests passed." << endl;
 	return 0;
 }
