@@ -63,14 +63,6 @@ void READIN::TEI(const char *filename, TEIMatrix *TEI){
     ji = INDEX(j-1,i-1);
     lk = INDEX(l-1,k-1);
 
- /**
-    if (ijkl > (*TEI).size()) {
-        cout << "Error : Matrix Size Exceded" << endl;
-        cout << (*TEI).size() << " = size" << endl;
-        cout << ijkl << " = index" << endl;
-        exit(-1);
-    } **/
-
     (*TEI)(INDEX(ij,kl)) = val;
     (*TEI)(INDEX(ji,kl)) = val;
     (*TEI)(INDEX(ij,lk)) = val;

@@ -27,7 +27,7 @@ void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs);
 
 class HartreeFock {
 
-public:
+  public:
 
     double enuc;
     double tol_dens;
@@ -69,12 +69,15 @@ public:
     void MOBasisFock();
     bool EConverg();
     bool DensConverg();
+    void SaveEnergy();
+    void SaveDensity();
 
     void MP2_Correction();
     void Set_OrbitalEnergy();
     double MP2_Energy();
     void TEI_Transform_N5();
     void TEI_Transform_N8();
+    void CheckEnergy();
 
     HartreeFock(double tol_e, double tol_dens);
 

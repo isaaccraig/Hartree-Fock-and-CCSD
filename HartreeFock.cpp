@@ -26,9 +26,9 @@ HartreeFock::HartreeFock(double tol_dens, double tol_e){
     Hcore = T + V;
 
     SymmetricOrth();              // Symmetric Orthogalization Matrix
-    Set_InitialFock();                // Build Initial Guess Fock Matrix
-    Set_DensityMatrix();              // Build Initial Density Matrix using occupied MOs
-    Set_Energy();                  // Compute the Initial SCF Energy
+    Set_InitialFock();            // Build Initial Guess Fock Matrix
+    Set_DensityMatrix();          // Build Initial Density Matrix using occupied MOs
+    Set_Energy();                 // Compute the Initial SCF Energy
 
 }
 
@@ -92,6 +92,16 @@ bool HartreeFock::DensConverg(){
     return (rmsD < tol_dens);
 }
 
+void HartreeFock::CheckEnergy(){
+
+  double expected = -74.991229564312;
+  double percent_off = 100 * (EMP2 + etot - expected)/expected;
+  cout << "--------------------------------------------------------------------------------" << endl;
+  cout << percent_off << " percent off from expected results" << endl;
+  cout << "--------------------------------------------------------------------------------" << endl;
+
+}
+
 void HartreeFock::Set_Energy() {
     // Sum over all atomic orbitals
     // of DensityMatrix * (Hcore + Fock)
@@ -104,6 +114,18 @@ void HartreeFock::Set_Energy() {
     etot = eelec + enuc;
 }
 
+void HartreeFock::SaveDensity(){
+  for (int i = 0; i < NUM_ORB; i++) {
+      for (int j = 0; j < NUM_ORB; j++) {
+          prev_D0(i,j) = D0(i,j);
+      }
+  }
+}
+
+void HartreeFock::SaveEnergy(){
+    prev_etot = etot;
+}
+
 void HartreeFock::Iterate(){
 
     int it = 0;
@@ -112,13 +134,9 @@ void HartreeFock::Iterate(){
     cout << "--------------------------------------------------------------------------------" << endl;
     while ( !(EConverg() && DensConverg()) ) {
         // Copy to check for convergence
-        for (int i = 0; i < NUM_ORB; i++) {
-            for (int j = 0; j < NUM_ORB; j++) {
-                prev_D0(i,j) = D0(i,j);
-            }
-        }
 
-        prev_etot = etot;
+        SaveEnergy();
+        SaveDensity();
         Set_Fock();
         Set_DensityMatrix();
         Set_Energy();
@@ -126,9 +144,6 @@ void HartreeFock::Iterate(){
         cout << it << "\t\t" << setprecision(6) << etot << endl;
 
         it ++;
-        if (it > 60) {
-            break;
-        }
     }
 }
 
@@ -267,9 +282,8 @@ double HartreeFock::MP2_Energy() {
     return EMP2;
 }
 
-/**
 void HartreeFock::TEI_Transform_N5() {
-
+    /**
     Matrix X;
     setzero(&X);
 
@@ -310,8 +324,8 @@ void HartreeFock::TEI_Transform_N5() {
                 }
            }
         }
-    }
-}**/
+    }**/
+}
 
 void HartreeFock::TEI_Transform_N8() {
     /**
