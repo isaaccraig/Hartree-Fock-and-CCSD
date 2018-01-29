@@ -18,12 +18,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "Read.hpp"
-#include "Eigen/Dense"
-#include "Eigen/Eigenvalues"
-#include "Eigen/Core"
-
-void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs);
+#include "Utils.hpp"
 
 class HartreeFock {
 
@@ -33,11 +28,6 @@ public:
     double tol_dens;
     double tol_e;
 
-    double mu_x, mu_y, mu_z;
-
-    double tot_dip_moment;
-    double q0, q1, q2;
-    
     Matrix S;
     Matrix T;
     Matrix V;
@@ -49,26 +39,34 @@ public:
     Matrix e0;
     Matrix D0;
     Matrix prev_D0;
-    double TEI[NUM_ORB][NUM_ORB][NUM_ORB][NUM_ORB];
-    
+    TEIMatrix TEI;
+
     double eelec;
     double etot;
     double prev_etot;
     double delE;
     double rmsD;
+    double mu_x;
+    double mu_y;
+    double mu_z;
+    double tot_dip_moment;
+    double q0;
+    double q1;
+    double q2;
 
-    void print_state();
-    void Set_DensityMatrix();
-    void Set_InitialFock();
-    void Set_Fock();
-    void SymmetricOrth();
-    void Iterate();
-    void Set_Energy();
+    void PrintState();
+    void SaveDensity();
+    void SaveEnergy();
+    void SetDensityMatrix();
+    void SetInitialFock();
+    void SetFock();
+    void Iterate( int maxit );
+    void SetEnergy();
     bool EConverg();
     bool DensConverg();
 
     HartreeFock(double tol_e, double tol_dens);
-    
+
 };
 
 #endif /* HartreeFock_hpp */

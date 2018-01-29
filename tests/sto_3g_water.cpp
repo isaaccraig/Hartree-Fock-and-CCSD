@@ -71,7 +71,7 @@ void sto_3g_water::test3(void)
 	test = create4DMatrix(test, sizes);
 	readMatrix4d("data/eri.dat", test);
 
-	MullikenMatrix TEI = hfTestObj->TEI;
+	TEIMatrix TEI = hfTestObj->TEI;
 
 	for( int i = 0; i < size; i++ )
 	{
