@@ -32,11 +32,6 @@ public:
     double enuc;
     double tol_dens;
     double tol_e;
-
-    double mu_x, mu_y, mu_z;
-
-    double tot_dip_moment;
-    double q0, q1, q2;
     
     Matrix S;
     Matrix T;
@@ -62,7 +57,7 @@ public:
     void Set_InitialFock();
     void Set_Fock();
     void SymmetricOrth();
-    void Iterate(int maxit);
+    void Iterate();
     void Set_Energy();
     bool EConverg();
     bool DensConverg();

@@ -3,9 +3,10 @@
 
 int main() {
     
-    HartreeFock HF(1, 1);
-    HF.Iterate(3);
+    HartreeFock HF(0.001, 0.001);
+    HF.print_state();
+    HF.Iterate();
     
-    return 0;
+    
     
 }

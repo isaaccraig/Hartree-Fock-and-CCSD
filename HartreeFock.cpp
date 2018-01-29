@@ -20,6 +20,9 @@ HartreeFock::HartreeFock(double tol_dens, double tol_e){
     READIN::SymMatrix("data/anuc.dat", &V);
     READIN::Mulliken("data/eri.dat", &TEI);
     
+    this->tol_dens = tol_dens;
+    this->tol_e = tol_e;
+    
     Hcore = T + V;
     
     SymmetricOrth();              // Symmetric Orthogalization Matrix
@@ -61,7 +64,7 @@ void HartreeFock::print_state() {
 
 bool HartreeFock::EConverg(){
     // checks for convergence of the engery value
-    delE = ( (prev_etot > etot) ? (prev_etot - etot) : (etot - prev_etot) );
+    delE = (prev_etot - etot);
     return (delE < tol_e);
 }
 
@@ -89,11 +92,11 @@ void HartreeFock::Set_Energy() {
     etot = eelec + enuc;
 }
 
-void HartreeFock::Iterate( int maxit ){
+void HartreeFock::Iterate(){
     
     int it = 0;
-    cout << "Iteration\t\t" << "E(elec)\t\t" << "E(tot)\t\t" << "Delta(E)\t\t" << "RMS(D)\t\t" << endl;
-    while ( (not EConverg()) && (not DensConverg())) {
+    cout << "Iteration\t" << "E(elec)\t" << "E(tot)\t" << "Delta(E)\t" << "RMS(D)\t" << endl;
+    while ( (~EConverg()) && (~DensConverg()) ) {
         // Copy to check for convergence
         for (int i = 0; i < NUM_ORB; i++) {
             for (int j = 0; j < NUM_ORB; j++) {
@@ -106,14 +109,13 @@ void HartreeFock::Iterate( int maxit ){
         Set_DensityMatrix();
         Set_Energy();
         
-        cout << it << "\t\t" << eelec << "\t\t" << etot << "\t\t" << delE << "\t\t" << rmsD << endl;
+        cout << it << "\t" << eelec << "\t" << etot << "\t" << delE << "\t" << rmsD << endl;
         
         it ++;
-        if (it < maxit) {
+        if (it > 10) {
             exit(-1);
         }
     }
-
 }
 
 void HartreeFock::Set_Fock(){
