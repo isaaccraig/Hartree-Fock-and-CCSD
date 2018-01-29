@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void READIN::setzero(Matrix *M){
+void setzero(Matrix *M){
   for (int i=0; i<M->rows(); i++){
       for (int j=0; j<M->cols(); j++){
         (*M)(i,j) = 0;
@@ -12,7 +12,7 @@ void READIN::setzero(Matrix *M){
   }
 }
 
-void READIN::setzero(TEIMatrix *M){
+void setzero(TEIMatrix *M){
   for (int i=0; i<M->rows(); i++){
       for (int j=0; j<M->cols(); j++){
         (*M)(i,j) = 0;
@@ -20,7 +20,7 @@ void READIN::setzero(TEIMatrix *M){
   }
 }
 
-void READIN::setzero(Double_Matrix *M){
+void setzero(Double_Matrix *M){
   for (int i=0; i<M->rows(); i++){
       for (int j=0; j<M->cols(); j++){
         (*M)(i,j) = 0;
@@ -37,7 +37,7 @@ void READIN::val(const char *filename, double *val) {
 
 void READIN::SymMatrix(const char *filename, Matrix *M) {
   FILE *input;
-  setzero(Matrix *M);
+  setzero(M);
   input = fopen(filename, "r");
   int i,j;
   double val;
@@ -51,7 +51,7 @@ void READIN::SymMatrix(const char *filename, Matrix *M) {
 
 void READIN::TEI(const char *filename, TEIMatrix *TEI){
   FILE *input;
-  setzero(TEIMatrix *TEI)
+  setzero(TEI);
   input = fopen(filename, "r");
   int i, j, k, l, ij, kl, ji, lk;
   double val;

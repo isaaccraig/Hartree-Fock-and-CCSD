@@ -50,28 +50,28 @@ void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs) {
 
 void HartreeFock::print_state() {
 
-    cout << "Nuclear repulsion energy = \n" << enuc << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
+    cout << "------------------------ Hartree Fock w/ MP2 Correction ------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
+    cout << "Nuclear repulsion energy = " << enuc << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Overlap Integrals: \n" << S << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Kinetic-Energy Integrals: \n" << T << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Nuclear Attraction Integrals: \n" << V << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Core Hamiltonian: \n" << Hcore << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Symmetric Orthogalization Matrix: \n" << SOM << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Fock Matrix (In Orthogalized Basis): \n" << F0 << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "MO Coefficent Matrix: \n" << C0 << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Density Matrix: \n" << D0 << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Energy: \n" << etot << endl;
-    cout << "----------------------------------------------------" << endl;
-    cout << "MO Basis Fock Matrix:\n" << FMO << endl;
-
 }
 
 bool HartreeFock::EConverg(){
@@ -107,10 +107,10 @@ void HartreeFock::Set_Energy() {
 void HartreeFock::Iterate(){
 
     int it = 0;
-    cout << "----------------------------------------------------" << endl;
-    cout << "Iter\t\t" << "E(elec)\t\t" << "E(tot)\t\t" << "Delta(E)\t\t" << "RMS(D)\t\t" << endl;
-    cout << "----------------------------------------------------" << endl;
-    while ( (~EConverg()) && (~DensConverg()) ) {
+    cout << "--------------------------------------------------------------------------------" << endl;
+    cout << "Iter\t\t" << "Energy\t\t" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
+    while ( !(EConverg() && DensConverg()) ) {
         // Copy to check for convergence
         for (int i = 0; i < NUM_ORB; i++) {
             for (int j = 0; j < NUM_ORB; j++) {
@@ -123,7 +123,7 @@ void HartreeFock::Iterate(){
         Set_DensityMatrix();
         Set_Energy();
 
-        cout << it << "\t\t" << eelec << "\t\t" << etot << "\t\t" << delE << "\t\t" << rmsD << endl;
+        cout << it << "\t\t" << setprecision(6) << etot << endl;
 
         it ++;
         if (it > 60) {
@@ -215,7 +215,11 @@ void HartreeFock::MOBasisFock() {
     // Fij = Sum over m,v of C(m,j) * C(v,i) <psi m|F|psi v>
     //              = Sum over m,v of C(m,j) * C(v,i) * F(m,v)
 
+    setzero(&FMO);
     FMO = C0.transpose() * F0 * C0;
+    //cout << "--------------------------------------------------------------------------------" << endl;
+    //cout << "MO Basis Fock Matrix:\n" << FMO << endl;
+
 }
 
 void HartreeFock::MP2_Correction(){
@@ -224,11 +228,11 @@ void HartreeFock::MP2_Correction(){
     Set_OrbitalEnergy();
     TEI_Transform_N8();
     EMP2 = MP2_Energy();
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "MP2 Correction Energy :" << EMP2 << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Corrected Energy :" << EMP2 + etot << endl;
-    cout << "----------------------------------------------------" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
 
 }
 
@@ -243,7 +247,7 @@ void HartreeFock::Set_OrbitalEnergy(){
 double HartreeFock::MP2_Energy() {
 
     EMP2 = 0;
-    int ia, ja, ja, ib, iajb, ibja;
+    int ia, ja, jb, ib, iajb, ibja;
 
     for (int i = 0; i< NUM_OCC; i++){
         for (int a = NUM_OCC; a < NUM_ORB; a++){
@@ -263,18 +267,16 @@ double HartreeFock::MP2_Energy() {
     return EMP2;
 }
 
+/**
 void HartreeFock::TEI_Transform_N5() {
-    /**
-     AO to MO integral transformation using a N^5 step
-     Both Two Electron Integrals are stored in arrays, taking advantage of
-     Permuational Symmetry
-     **/
 
     Matrix X;
-    READIN::setzero(&X);
+    setzero(&X);
 
     Double_Matrix Temp;
-    READIN::setzero(&Temp);
+    setzero(&Temp);
+
+    int i, j, ij, k, l, kl;
 
     for (i = 0, ij = 0; i < NUM_ORB; i++) {
         for (j = 0; j <= i; j++, ij++) {
@@ -283,7 +285,7 @@ void HartreeFock::TEI_Transform_N5() {
                     X(k,l) = X(l,k) = TEI(INDEX(ij,kl));
                   }
             }
-            X = C.transpose() * X * C;
+            X = C0.transpose() * X * C0;
             for (k = 0, kl = 0; k < NUM_ORB; k++) {
                 for (l = 0; l <= k; l++, kl++) {
                     Temp(kl,ij) = X(k,l);
@@ -292,19 +294,24 @@ void HartreeFock::TEI_Transform_N5() {
         }
     }
 
-    TEI_MO.zeros();
+    setzero(&TEI_MO);
 
-    for (k = 0, kl = 0; k < NUM_ORB; k++)
+    for (k = 0, kl = 0; k < NUM_ORB; k++) {
         for (l = 0; l <= k; l++, kl++) {
-            for (i = 0, ij = 0; i < NUM_ORB; i++)
-                for (j = 0; j <= i; j++, ij++)
-                    X(i,j) = X(j,i) = tmp(kl,ij);
-            X = C.transpose() * X * C;
-            for (i = 0, ij = 0; i < NUM_ORB; i++)
-                for (j = 0; j <= i; j++, ij++)
+            for (i = 0, ij = 0; i < NUM_ORB; i++) {
+                for (j = 0; j <= i; j++, ij++) {
+                    X(i,j) = X(j,i) = Temp(kl,ij);
+                }
+            }
+            X = C0.transpose() * X * C0;
+            for (i = 0, ij = 0; i < NUM_ORB; i++){
+                for (j = 0; j <= i; j++, ij++){
                     TEI_MO(INDEX(kl,ij)) = X(i,j);
+                }
+           }
         }
-}
+    }
+}**/
 
 void HartreeFock::TEI_Transform_N8() {
     /**
@@ -316,9 +323,9 @@ void HartreeFock::TEI_Transform_N8() {
     int i, j, k, l, ijkl;
     int p, q, r, s, pqrs;
 
-    READIN::setzero(&TEI_MO);
+    setzero(&TEI_MO);
 
-    for(i=0, ijkl=0; i < NUM_ORB; i++) { /
+    for(i=0, ijkl=0; i < NUM_ORB; i++) {
     for(j=0; j <= i; j++) {
     for(k=0; k <= i; k++) {
     for(l=0; l <= (i==k ? j : k); l++, ijkl++) {
