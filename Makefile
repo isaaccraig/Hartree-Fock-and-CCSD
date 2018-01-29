@@ -1,5 +1,5 @@
 
-OBJS = HartreeFock.o Utils.o main.o
+OBJS = HartreeFock.o Read.o main.o
 
 CC = g++ -std=c++11
 DEBUG = -ggdb
@@ -9,11 +9,11 @@ LFLAGS = -Wall $(DEBUG)
 prog : $(OBJS)
 	$(CC) $(LFLAGS) $(OBJS) -o HF
 
-main.o : main.cpp HartreeFock.hpp
+main.o : main.cpp HartreeFock.hpp 
 	$(CC) $(CFLAGS) main.cpp
 
-HartreeFock.o : HartreeFock.hpp HartreeFock.cpp Utils.hpp
+HartreeFock.o : HartreeFock.hpp HartreeFock.cpp Read.hpp
 	$(CC) $(CFLAGS) HartreeFock.cpp
 
-Utils.o : Utils.hpp Utils.cpp
-	$(CC) $(CFLAGS) Utils.cpp
+Read.o : Read.hpp Read.cpp
+	$(CC) $(CFLAGS) Read.cpp

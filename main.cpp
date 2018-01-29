@@ -2,9 +2,10 @@
 #include "HartreeFock.hpp"
 
 int main() {
-
-    HartreeFock HF(0.01, 0.01);
-    HF.PrintState();
-    HF.Iterate( 2 );
-
+    
+    HartreeFock HF(1, 1);
+    HF.Iterate(3);
+    
+    return 0;
+    
 }
