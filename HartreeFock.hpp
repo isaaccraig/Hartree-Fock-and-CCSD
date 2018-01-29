@@ -32,20 +32,27 @@ public:
     double enuc;
     double tol_dens;
     double tol_e;
-    
+
+    double EMP2;
+
     Matrix S;
     Matrix T;
     Matrix V;
     Matrix Hcore;
 
+    Vector E;
+
     Matrix SOM;
     Matrix F0;
+    Matrix FMO;
     Matrix C0;
     Matrix e0;
     Matrix D0;
     Matrix prev_D0;
-    MullikenMatrix TEI;
-    
+
+    TEIMatrix TEI;
+    TEIMatrix TEI_MO;
+
     double eelec;
     double etot;
     double prev_etot;
@@ -59,11 +66,18 @@ public:
     void SymmetricOrth();
     void Iterate();
     void Set_Energy();
+    void MOBasisFock();
     bool EConverg();
     bool DensConverg();
 
+    void MP2_Correction();
+    void Set_OrbitalEnergy();
+    double MP2_Energy();
+    void TEI_Transform_N5();
+    void TEI_Transform_N8();
+
     HartreeFock(double tol_e, double tol_dens);
-    
+
 };
 
 #endif /* HartreeFock_hpp */

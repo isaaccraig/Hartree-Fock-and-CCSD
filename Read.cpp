@@ -4,6 +4,30 @@
 
 using namespace std;
 
+void READIN::setzero(Matrix *M){
+  for (int i=0; i<M->rows(); i++){
+      for (int j=0; j<M->cols(); j++){
+        (*M)(i,j) = 0;
+      }
+  }
+}
+
+void READIN::setzero(TEIMatrix *M){
+  for (int i=0; i<M->rows(); i++){
+      for (int j=0; j<M->cols(); j++){
+        (*M)(i,j) = 0;
+      }
+  }
+}
+
+void READIN::setzero(Double_Matrix *M){
+  for (int i=0; i<M->rows(); i++){
+      for (int j=0; j<M->cols(); j++){
+        (*M)(i,j) = 0;
+      }
+  }
+}
+
 void READIN::val(const char *filename, double *val) {
   FILE *input;
   input = fopen(filename, "r");
@@ -13,6 +37,7 @@ void READIN::val(const char *filename, double *val) {
 
 void READIN::SymMatrix(const char *filename, Matrix *M) {
   FILE *input;
+  setzero(Matrix *M);
   input = fopen(filename, "r");
   int i,j;
   double val;
@@ -24,8 +49,9 @@ void READIN::SymMatrix(const char *filename, Matrix *M) {
   fclose(input);
 }
 
-void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
+void READIN::TEI(const char *filename, TEIMatrix *TEI){
   FILE *input;
+  setzero(TEIMatrix *TEI)
   input = fopen(filename, "r");
   int i, j, k, l, ij, kl, ji, lk;
   double val;
@@ -36,7 +62,7 @@ void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
     kl = INDEX(k-1,l-1);
     ji = INDEX(j-1,i-1);
     lk = INDEX(l-1,k-1);
-      
+
  /**
     if (ijkl > (*TEI).size()) {
         cout << "Error : Matrix Size Exceded" << endl;
@@ -44,7 +70,7 @@ void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
         cout << ijkl << " = index" << endl;
         exit(-1);
     } **/
-      
+
     (*TEI)(INDEX(ij,kl)) = val;
     (*TEI)(INDEX(ji,kl)) = val;
     (*TEI)(INDEX(ij,lk)) = val;
@@ -53,44 +79,7 @@ void READIN::Mulliken(const char *filename, MullikenMatrix *TEI){
     (*TEI)(INDEX(kl,ji)) = val;
     (*TEI)(INDEX(lk,ji)) = val;
     (*TEI)(INDEX(lk,ij)) = val;
-      
+
   }
   fclose(input);
 }
-
-void READIN::Test_Mulliken(MullikenMatrix *TEI) {
-    
-    int ij, ji, kl, lk;
-    bool val;
-    
-    for (int i = 0; i < NUM_ORB ; i++) {
-        for (int j = 0; j < NUM_ORB ; j++) {
-            for (int k = 0; k < NUM_ORB ; k++) {
-                for (int l = 0; l < NUM_ORB ; l++) {
-                    
-                    ij = INDEX(i,j);
-                    ji = INDEX(j,i);
-                    kl = INDEX(k,l);
-                    lk = INDEX(l,k);
-                    
-                    val = ((*TEI)(INDEX(ij,kl)) ==
-                           (*TEI)(INDEX(ji,kl)) ==
-                           (*TEI)(INDEX(ij,lk)) ==
-                           (*TEI)(INDEX(ji,lk)) ==
-                           (*TEI)(INDEX(kl,ij)) ==
-                           (*TEI)(INDEX(kl,ji)) ==
-                           (*TEI)(INDEX(lk,ji)) ==
-                           (*TEI)(INDEX(lk,ij)));
-                    
-                    if (!val) {
-                        cout << "MULIKEN FAILED" << endl;
-                        cout << ij << " " << ji << " " << kl << " " << lk << " " <<endl;
-                        exit(-1);
-                    }
-                }
-            }
-        }
-    }
-    
-}
-
