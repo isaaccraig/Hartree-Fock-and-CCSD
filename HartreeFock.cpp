@@ -13,34 +13,38 @@
 #include <cmath>
 
 using namespace std;
+using namespace Eigen;
 
-HartreeFock::HartreeFock(double tol_dens, double tol_e){
+HartreeFock::HartreeFock(string basisSet, double tol_dens, double tol_e){
 
-    string path = "data/STO3G_Water/";
+    path = "data/" + basisSet + "/";
+    READIN::val((path + "nBasis.dat").c_str(), &numBasisFunc);
+    READIN::val((path + "nElectrons.dat").c_str(), &numElectrons);
+    int temp = (numBasisFunc * (numBasisFunc + 1) / 2);
+    int numMulliken = ((temp + 1) * temp)/2;
 
-    S = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    F0 = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    V = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    T = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
+    S = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    F0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    V = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    T = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    Hcore = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
 
-    Hcore = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    SOM = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    C0 = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    FMO = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
+    errorVec = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    SOM = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    C0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    FMO = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    e0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    D0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    prev_D0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
+    E = new Eigen::MatrixXd(numBasisFunc, 1);
 
-    e0 = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    D0 = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-    prev_D0 = new Eigen::MatrixXd(NUM_ORB, NUM_ORB);
-
-    E = new Eigen::MatrixXd(NUM_ORB, 1);
-
-    TEI_AO = new Eigen::MatrixXd(NUM_MUL, 1);
-    TEI_MO = new Eigen::MatrixXd(NUM_MUL, 1);
+    TEI_AO = new Eigen::MatrixXd(numMulliken, 1);
+    TEI_MO = new Eigen::MatrixXd(numMulliken, 1);
 
     READIN::val((path + "enuc.dat").c_str(), &enuc);
-    READIN::SymMatrix((path + "overlap.dat").c_str(),  S);
-    READIN::SymMatrix((path + "kinetic.dat").c_str(), T);
-    READIN::SymMatrix((path + "anuc.dat").c_str(), V);
+    READIN::SymMatrix((path + "s.dat").c_str(),  S);
+    READIN::SymMatrix((path + "t.dat").c_str(), T);
+    READIN::SymMatrix((path + "v.dat").c_str(), V);
     READIN::TEI((path + "eri.dat").c_str(), TEI_AO);
 
     this->tol_dens = tol_dens;
@@ -57,21 +61,26 @@ HartreeFock::HartreeFock(double tol_dens, double tol_e){
 
 HartreeFock::~HartreeFock() {
 
-    delete S;
-    delete V;
-    delete T;
-    delete Hcore;
-    delete E;
-    delete SOM;
-    delete F0;
-    delete FMO;
-    delete C0;
-    delete e0;
-    delete D0;
-    delete prev_D0;
+    //delete S;
+    //delete V;
+    //delete T;
+    //delete Hcore;
+    //delete E;
+    //delete SOM;
+    //delete F0;
+    //delete FMO;
+    //delete C0;
+    //delete e0;
+    //delete D0;
+    //delete prev_D0;
+    //delete TEI_MO;
+    //delete TEI_AO;
 
-    delete TEI_MO;
-    delete TEI_AO;
+    for (int i = 0; i < NUM_ERROR_MATRICES; i ++ ){
+        //delete fockMatrices[i];
+        //delete errorVectors[i];
+    }
+
 }
 
 void HartreeFock::print_state() {
@@ -97,7 +106,7 @@ void HartreeFock::print_state() {
     cout << "--------------------------------------------------------------------------------" << endl;
     cout << "Density Matrix: \n" << (*D0) << endl;
     cout << "--------------------------------------------------------------------------------" << endl;
-    cout << "Energy: \n" << etot << endl;
+    cout << "Electronic Energy: \n" << eelec << endl;
 }
 
 bool HartreeFock::EConverg(){
@@ -109,8 +118,8 @@ bool HartreeFock::EConverg(){
 bool HartreeFock::DensConverg(){
     // Checks for convergence of the density matrix
     double val = 0;
-    for (int i=0; i<NUM_ORB; i++){
-        for (int j=0; j<NUM_ORB; j++){
+    for (int i=0; i<numBasisFunc; i++){
+        for (int j=0; j<numBasisFunc; j++){
             val += pow((*prev_D0)(i,j) - (*D0)(i,j), 2);
         }
     }
@@ -133,8 +142,8 @@ void HartreeFock::Set_Energy() {
     // Sum over all atomic orbitals
     // of DensityMatrix * (Hcore + Fock)
     eelec = 0;
-    for (int i = 0; i < NUM_ORB; i++){
-        for (int j = 0; j < NUM_ORB; j++){
+    for (int i = 0; i < numBasisFunc; i++){
+        for (int j = 0; j < numBasisFunc; j++){
             eelec += (*D0)(i,j) * ((*Hcore)(i,j) + (*F0)(i,j));
         }
     }
@@ -142,8 +151,8 @@ void HartreeFock::Set_Energy() {
 }
 
 void HartreeFock::SaveDensity(){
-  for (int i = 0; i < NUM_ORB; i++) {
-      for (int j = 0; j < NUM_ORB; j++) {
+  for (int i = 0; i < numBasisFunc; i++) {
+      for (int j = 0; j < numBasisFunc; j++) {
           (*prev_D0)(i,j) = (*D0)(i,j);
       }
   }
@@ -168,10 +177,83 @@ void HartreeFock::Iterate(){
         Set_DensityMatrix();
         Set_Energy();
 
-        cout << it << "\t\t" << setprecision(6) << etot << endl;
+        cout << it << "\t\t" << setprecision(6) << eelec << "\t\t" << eelec + enuc << endl;
 
-        it ++;
+        it++;
     }
+}
+
+void HartreeFock::DIISIterate(){
+
+    int it = 0;
+    cout << "--------------------------------------------------------------------------------" << endl;
+    cout << "Iter\t\t" << "Energy\t\t" << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
+    while ( !(EConverg() && DensConverg()) ) {
+        // Copy to check for convergence
+
+        SaveEnergy();
+        SaveDensity();
+        Set_Fock();
+
+        MatrixXd *F0copy = new MatrixXd(numBasisFunc, numBasisFunc);
+
+        copyMatrix(F0, F0copy);
+        fockMatrices[it%6] = F0copy;
+
+        Set_Error(); // use normal fock in error calc
+        errorVectors[it%6] = errorVec;
+        if (it >= 2) {
+            Extrapolate_Fock((it<NUM_ERROR_MATRICES)? it : NUM_ERROR_MATRICES);
+        }
+        Set_DensityMatrix(); // use extrapolated fock in density and energy calc
+        Set_Energy();
+
+        cout << it << "\t\t" << setprecision(6) << etot << endl;
+        it ++;
+
+    }
+}
+
+void HartreeFock::Extrapolate_Fock(int N) {
+
+    MatrixXd *A = new MatrixXd(N + 1, N + 1);
+    VectorXd *b = new VectorXd(N + 1);
+
+    for (int i = 0; i < N + 1; i++){
+        for (int j = 0; j <= i; j++) {
+            if (i == N && j == N) {
+                (*A)(i, j) = 0;
+            } else if (i == N) {
+                (*A)(i, j) = -1;
+            } else {
+                (*A)(i, j) = ((*errorVectors[i]) * (*errorVectors[j]).adjoint()).trace();
+            }
+            (*A)(j, i) = (*A)(i, j);
+        }
+        (*b)(i) = 0;
+    }
+
+    (*b)(N) = -1;
+    VectorXd x = (*A).colPivHouseholderQr().solve(*b);
+    setzero(F0);
+
+    // last column solves for lagrange multiplier such that normalized, don't include
+    // this is why bounds run to N, not N + 1 as they did prior
+    for (int i = 0; i < N; i++) {
+        (*F0) = x(i) * (*fockMatrices[i]);
+    }
+
+    //delete A;
+    //delete b;
+};
+
+void HartreeFock::Set_Error(){
+    // S :  AO-basis overlap matrix
+    // D :  AO density used to make F (Fock)
+    (*errorVec) = (*F0) * (*D0) * (*S) - (*S) * (*D0) * (*F0);
+    (*errorVec) = (*SOM).adjoint() * (*errorVec) * (*SOM);
+
 }
 
 void HartreeFock::Set_Fock(){
@@ -179,13 +261,17 @@ void HartreeFock::Set_Fock(){
     int ijkl, ikjl;
     int ij, kl, ik, jl;
 
-    for(int i=0; i < NUM_ORB; i++) {
-        for(int j=0; j < NUM_ORB; j++) {
-
+    for(int i=0; i < numBasisFunc; i++) {
+        for(int j=0; j < numBasisFunc; j++) {
             (*F0)(i,j) = (*Hcore)(i,j);
+        }
+    }
 
-            for(int k=0; k < NUM_ORB; k++) {
-                for(int l=0; l < NUM_ORB; l++) {
+    for(int i=0; i < numBasisFunc; i++) {
+        for(int j=0; j < numBasisFunc; j++) {
+
+            for(int k=0; k < numBasisFunc; k++) {
+                for(int l=0; l < numBasisFunc; l++) {
 
                     ij = compoundIndex(i,j);
                     kl = compoundIndex(k,l);
@@ -194,11 +280,16 @@ void HartreeFock::Set_Fock(){
                     jl = compoundIndex(j,l);
                     ikjl = compoundIndex(ik,jl);
 
-                    (*F0)(i,j) += (*D0)(k,l) * (2.0 * (*TEI_AO)(ijkl) - (*TEI_AO)(ikjl));
+                    (*F0)(i,j) += (*prev_D0)(k,l) * (2.0 * (*TEI_AO)(ijkl) - (*TEI_AO)(ikjl));
                 }
             }
         }
     }
+
+    //cout << "------------------------------ Fock Matrix ------------------------------" << endl;
+    //cout << (*F0) << endl;
+    //(*F0) = (*SOM).transpose() * (*F0) * (*SOM);
+
 }
 
 void HartreeFock::Set_InitialFock(){
@@ -211,21 +302,16 @@ void HartreeFock::Set_InitialFock(){
 void HartreeFock::Set_DensityMatrix(){
     // Builds the density matrix from the occupied MOs
     // By summing over all the occupied spatial MOs
-
-    // Diagonlize Fock Matrix
     Diagonlize(F0, e0, C0);
-
     // Transform eigenvectors onto original AO basis
     (*C0) = (*SOM) * (*C0);
 
-    double M;
-    for (int i = 0; i < NUM_ORB; i++){
-        for (int j = 0; j < NUM_ORB; j++){
-            M = 0;
-            for(int m=0; m < NUM_OCC; m++) {
-                M += (*C0)(i,m) * (*C0)(j,m);
+    setzero(D0);
+    for (int i = 0; i < numBasisFunc; i++){
+        for (int j = 0; j < numBasisFunc; j++){
+            for(int m = 0; m < ((numElectrons + 4) * 0.5); m++) {
+                (*D0)(i,j) += (*C0)(i,m) * (*C0)(j,m);
             }
-            (*D0)(i,j) = M;
         }
     }
 }
@@ -250,6 +336,58 @@ void HartreeFock::Set_MOBasisFock() {
 
 }
 
+void HartreeFock::DipoleMoment(){
+
+    MatrixXd *mu_x= new MatrixXd(numBasisFunc, numBasisFunc);
+    MatrixXd *mu_y= new MatrixXd(numBasisFunc, numBasisFunc);
+    MatrixXd *mu_z= new MatrixXd(numBasisFunc, numBasisFunc);
+
+    READIN::SymMatrix((path + "mux.dat").c_str(),mu_x);
+    READIN::SymMatrix((path + "muy.dat").c_str(),mu_y);
+    READIN::SymMatrix((path + "muz.dat").c_str(),mu_z);
+
+    double mu_x_val;
+    double mu_y_val;
+    double mu_z_val;
+
+    for (int mu = 0; mu < numBasisFunc; mu++){
+        for (int nu = 0; nu < numBasisFunc; nu++){
+            mu_x_val += (*D0)(mu,nu) * (*mu_x)(mu,nu);
+            mu_y_val += (*D0)(mu,nu) * (*mu_y)(mu,nu);
+            mu_z_val += (*D0)(mu,nu) * (*mu_z)(mu,nu);
+        }
+    }
+
+    cout << "Mu-X = \t" << 2 * mu_x_val<< endl;
+    cout << "Mu-Y = \t" << 2 * mu_y_val<< endl;
+    cout << "Mu-Z = \t" << 2 * mu_z_val<< endl;
+    cout << "Total Dipole Moment = \t" << pow(pow(2 * mu_x_val,2) + pow(2 * mu_y_val,2) + pow(2 * mu_z_val,2), 0.5) << endl;
+    cout << "--------------------------------------------------------------------------------" << endl;
+
+
+}
+
+void HartreeFock::MullikenAnalysis(){
+
+    // must know where each basis function is centered
+    // this is not given !
+
+    //Molecule mol("data/geom.txt", 0);
+    int q = 0 ;
+    int startOrb = 0;
+    int endOrb = startOrb + 2;
+
+    for (int i = 0; i < numBasisFunc; i ++) {
+        //q = mol.zvals[1];
+        for (int mu = startOrb; mu < endOrb; mu++) {
+            q = q - 2 * ((*D0) * (*S))(mu, mu);
+        }
+        cout << "Charge on atom " << i << " = \n\n" << q << endl;
+        startOrb = endOrb;
+    }
+
+}
+
 void HartreeFock::MP2_Correction(){
 
     Set_MOBasisFock();
@@ -267,8 +405,7 @@ void HartreeFock::MP2_Correction(){
 void HartreeFock::Set_OrbitalEnergy(){
     // Diagonal Elements of The Fock Operator
     // in the MO Bais are the orbital Energy values
-    for (int i = 0; i< NUM_ORB; i++) {
+    for (int i = 0; i< numBasisFunc; i++) {
         (*E)(i) = (*FMO)(i,i);
     }
 }
-

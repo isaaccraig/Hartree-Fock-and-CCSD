@@ -24,6 +24,8 @@
 #include "Eigen/Eigenvalues"
 #include "Eigen/Core"
 
+#define NUM_ERROR_MATRICES 6
+
 class HartreeFock {
 
   public:
@@ -32,6 +34,13 @@ class HartreeFock {
     double tol_dens;
     double tol_e;
     double EMP2;
+
+    int numElectrons;
+    int numBasisFunc;
+    std::string path;
+
+    Eigen::MatrixXd *errorVectors[NUM_ERROR_MATRICES];
+    Eigen::MatrixXd *fockMatrices[NUM_ERROR_MATRICES];
 
     Eigen::MatrixXd *S;
     Eigen::MatrixXd *V;
@@ -44,6 +53,7 @@ class HartreeFock {
     Eigen::MatrixXd *C0;
     Eigen::MatrixXd *e0;
     Eigen::MatrixXd *D0;
+    Eigen::MatrixXd *errorVec;
     Eigen::MatrixXd *prev_D0;
 
     Eigen::MatrixXd *TEI_MO;
@@ -59,7 +69,11 @@ class HartreeFock {
     void Set_DensityMatrix();
     void Set_InitialFock();
     void Set_Fock();
+    void Extrapolate_Fock(int n);
+    void Set_Error();
     void Iterate();
+    void DIISIterate();
+    void Set_MOCoefficents();
     void Set_Energy();
     void Set_MOBasisFock();
     bool EConverg();
@@ -67,11 +81,13 @@ class HartreeFock {
     void SaveEnergy();
     void SaveDensity();
 
+    void MullikenAnalysis();
+    void DipoleMoment();
     void MP2_Correction();
     void Set_OrbitalEnergy();
     void CheckEnergy();
 
-    HartreeFock(double tol_e, double tol_dens);
+    HartreeFock(std::string basisSet, double tol_e, double tol_dens);
     ~HartreeFock();
 
 };

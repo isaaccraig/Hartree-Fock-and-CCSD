@@ -16,12 +16,26 @@ void READIN::val(const char *filename, double *val) {
     fclose(input);
 }
 
+void READIN::val(const char *filename, int *val) {
+    FILE *input;
+    input = fopen(filename, "r");
+    if(!input) {
+        string msg = filename;
+        msg = "File opening failed with " + msg;
+        perror(msg.c_str());
+    }
+    fscanf(input, "%d", val);
+    fclose(input);
+}
+
 void READIN::SymMatrix(const char *filename, Eigen::MatrixXd *M) {
     FILE *input;
     setzero(M);
     input = fopen(filename, "r");
     if(!input) {
-        perror("File opening failed");
+        string msg = filename;
+        msg = "File opening failed with " + msg;
+        perror(msg.c_str());
     }
     int i,j;
     double val;
@@ -38,7 +52,9 @@ void READIN::TEI(const char *filename, Eigen::MatrixXd *TEI){
   setzero(TEI);
   input = fopen(filename, "r");
     if(!input) {
-        perror("File opening failed");
+        string msg = filename;
+        msg = "File opening failed with " + msg;
+        perror(msg.c_str());
     }
   int i, j, k, l, ij, kl, ji, lk;
   double val;

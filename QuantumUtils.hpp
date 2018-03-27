@@ -12,11 +12,13 @@
 #include "Eigen/Dense"
 #include "Eigen/Core"
 
-#define NUM_ORB 7
+#define NUM_ORB 14
 #define NUM_ELEC 10
 #define NUM_OCC (NUM_ELEC/2)
 #define NUM_MUL 477
-//NUM_ORB*(NUM_ORB+1)/2
+//
+
+
 
 class SanityCheckException: public std::exception {
   std::string msg;
@@ -37,3 +39,4 @@ void atomicToMolecularN8(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *TEI_AO, Eigen
 void atomicToMolecularN5(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *TEI_AO, Eigen::MatrixXd *C0);
 void molecularToMolecularSpin(Eigen::MatrixXd *TEI_MOspin, Eigen::MatrixXd *TEI_MO);
 double MP2_Energy(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *E);
+void copyMatrix(Eigen::MatrixXd *M, Eigen::MatrixXd *N);
