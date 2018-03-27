@@ -19,38 +19,46 @@
 #include <algorithm>
 
 #include "Read.hpp"
+#include "QuantumUtils.hpp"
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "Eigen/Core"
 
-void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs);
+#define NUM_ERROR_MATRICES 6
 
 class HartreeFock {
 
-public:
+  public:
 
     double enuc;
     double tol_dens;
     double tol_e;
+    double EMP2;
 
-    double mu_x, mu_y, mu_z;
+    int numElectrons;
+    int numBasisFunc;
+    std::string path;
 
-    double tot_dip_moment;
-    double q0, q1, q2;
-    
-    Matrix S;
-    Matrix T;
-    Matrix V;
-    Matrix Hcore;
+    Eigen::MatrixXd *errorVectors[NUM_ERROR_MATRICES];
+    Eigen::MatrixXd *fockMatrices[NUM_ERROR_MATRICES];
 
-    Matrix SOM;
-    Matrix F0;
-    Matrix C0;
-    Matrix e0;
-    Matrix D0;
-    Matrix prev_D0;
-    MullikenMatrix TEI;
-    
+    Eigen::MatrixXd *S;
+    Eigen::MatrixXd *V;
+    Eigen::MatrixXd *T;
+    Eigen::MatrixXd *Hcore;
+    Eigen::MatrixXd *E;
+    Eigen::MatrixXd *SOM;
+    Eigen::MatrixXd *F0;
+    Eigen::MatrixXd *FMO;
+    Eigen::MatrixXd *C0;
+    Eigen::MatrixXd *e0;
+    Eigen::MatrixXd *D0;
+    Eigen::MatrixXd *errorVec;
+    Eigen::MatrixXd *prev_D0;
+
+    Eigen::MatrixXd *TEI_MO;
+    Eigen::MatrixXd *TEI_AO;
+
     double eelec;
     double etot;
     double prev_etot;
@@ -61,14 +69,27 @@ public:
     void Set_DensityMatrix();
     void Set_InitialFock();
     void Set_Fock();
-    void SymmetricOrth();
+    void Extrapolate_Fock(int n);
+    void Set_Error();
     void Iterate();
+    void DIISIterate();
+    void Set_MOCoefficents();
     void Set_Energy();
+    void Set_MOBasisFock();
     bool EConverg();
     bool DensConverg();
+    void SaveEnergy();
+    void SaveDensity();
 
-    HartreeFock(double tol_e, double tol_dens);
-    
+    void MullikenAnalysis();
+    void DipoleMoment();
+    void MP2_Correction();
+    void Set_OrbitalEnergy();
+    void CheckEnergy();
+
+    HartreeFock(std::string basisSet, double tol_e, double tol_dens);
+    ~HartreeFock();
+
 };
 
 #endif /* HartreeFock_hpp */
