@@ -19,11 +19,10 @@
 #include <algorithm>
 
 #include "Read.hpp"
+#include "QuantumUtils.hpp"
 #include "Eigen/Dense"
 #include "Eigen/Eigenvalues"
 #include "Eigen/Core"
-
-void Diagonlize(Matrix *M, Matrix *evals, Matrix *evecs);
 
 class HartreeFock {
 
@@ -32,26 +31,23 @@ class HartreeFock {
     double enuc;
     double tol_dens;
     double tol_e;
-
     double EMP2;
 
-    Matrix S;
-    Matrix T;
-    Matrix V;
-    Matrix Hcore;
+    Eigen::MatrixXd *S;
+    Eigen::MatrixXd *V;
+    Eigen::MatrixXd *T;
+    Eigen::MatrixXd *Hcore;
+    Eigen::MatrixXd *E;
+    Eigen::MatrixXd *SOM;
+    Eigen::MatrixXd *F0;
+    Eigen::MatrixXd *FMO;
+    Eigen::MatrixXd *C0;
+    Eigen::MatrixXd *e0;
+    Eigen::MatrixXd *D0;
+    Eigen::MatrixXd *prev_D0;
 
-    Vector E;
-
-    Matrix SOM;
-    Matrix F0;
-    Matrix FMO;
-    Matrix C0;
-    Matrix e0;
-    Matrix D0;
-    Matrix prev_D0;
-
-    TEIMatrix TEI;
-    TEIMatrix TEI_MO;
+    Eigen::MatrixXd *TEI_MO;
+    Eigen::MatrixXd *TEI_AO;
 
     double eelec;
     double etot;
@@ -63,10 +59,9 @@ class HartreeFock {
     void Set_DensityMatrix();
     void Set_InitialFock();
     void Set_Fock();
-    void SymmetricOrth();
     void Iterate();
     void Set_Energy();
-    void MOBasisFock();
+    void Set_MOBasisFock();
     bool EConverg();
     bool DensConverg();
     void SaveEnergy();
@@ -74,12 +69,10 @@ class HartreeFock {
 
     void MP2_Correction();
     void Set_OrbitalEnergy();
-    double MP2_Energy();
-    void TEI_Transform_N5();
-    void TEI_Transform_N8();
     void CheckEnergy();
 
     HartreeFock(double tol_e, double tol_dens);
+    ~HartreeFock();
 
 };
 
