@@ -25,6 +25,7 @@
 #include "Eigen/Core"
 
 #define NUM_ERROR_MATRICES 6
+#define PRECISION 6
 
 class HartreeFock {
 
@@ -55,7 +56,7 @@ class HartreeFock {
     Eigen::MatrixXd *D0;
     Eigen::MatrixXd *errorVec;
     Eigen::MatrixXd *prev_D0;
-
+    Eigen::MatrixXd *FOrthogonal;
     Eigen::MatrixXd *TEI_MO;
     Eigen::MatrixXd *TEI_AO;
 
@@ -78,6 +79,8 @@ class HartreeFock {
     void Set_MOBasisFock();
     bool EConverg();
     bool DensConverg();
+    bool DIISInitiate();
+    bool DIISConverg();
     void SaveEnergy();
     void SaveDensity();
 

@@ -305,18 +305,19 @@ void SpinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
     }
   }
 
-double MP2_Energy(MatrixXd *TEI_MO, MatrixXd *E) {
+double MP2_Energy(MatrixXd *TEI_MO, MatrixXd *E, int nElectrons) {
     // E are orbital Energy values
     double EMP2 = 0;
     int numOrb = (*E).rows();
+    int nOcc = nElectrons/2; // closed shell
     int ia, ja, jb, ib, iajb, ibja;
 
-    for (int i = 0; i< numOrb; i++){
-        for (int a = numOrb; a < numOrb; a++){
+    for (int i = 0; i < nOcc; i++){
+        for (int a = nOcc; a < numOrb; a++){
             ia = compoundIndex(i,a);
-            for (int j = 0; j< numOrb; j++){
+            for (int j = 0; j < nOcc ; j++){
                 ja = compoundIndex(j,a);
-                for (int b = numOrb; b < numOrb; b++){
+                for (int b = nOcc; b < numOrb; b++){
                     jb = compoundIndex(j,b);
                     ib = compoundIndex(i,b);
                     iajb = compoundIndex(ia,jb);

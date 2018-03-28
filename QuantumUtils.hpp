@@ -38,5 +38,5 @@ void setzero(Eigen::MatrixXd *M);
 void atomicToMolecularN8(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *TEI_AO, Eigen::MatrixXd *C0);
 void atomicToMolecularN5(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *TEI_AO, Eigen::MatrixXd *C0);
 void molecularToMolecularSpin(Eigen::MatrixXd *TEI_MOspin, Eigen::MatrixXd *TEI_MO);
-double MP2_Energy(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *E);
+double MP2_Energy(Eigen::MatrixXd *TEI_MO, Eigen::MatrixXd *E, int nElectrons);
 void copyMatrix(Eigen::MatrixXd *M, Eigen::MatrixXd *N);

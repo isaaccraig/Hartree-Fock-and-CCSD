@@ -3,6 +3,32 @@
 
 using namespace std;
 
+void READIN::geometry(const char *filename, struct Geometry *geomStruct){
+    // open filename
+    ifstream input(filename);
+    if (not input.is_open()) {
+        std::string message = "Unable to open file : ";
+        message += filename;
+        cout << message.c_str() << endl;
+        exit(-1);
+    }
+
+    // read the number of atoms from filename
+    input >> geomStruct->natom;
+    geomStruct->zvals = new int[geomStruct->natom];
+
+    // Dynamically Allocate Space for geom
+    geomStruct->geom = new double* [geomStruct->natom];
+    for(int i=0; i < geomStruct->natom; i++)
+        geomStruct->geom[i] = new double[3];
+
+    // read in the geometry from filename
+    for(int i=0; i < geomStruct->natom; i++)
+        input >> geomStruct->zvals[i] >> geomStruct->geom[i][0] >> geomStruct->geom[i][1] >> geomStruct->geom[i][2];
+
+    input.close();
+}
+
 
 void READIN::val(const char *filename, double *val) {
     FILE *input;

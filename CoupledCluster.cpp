@@ -8,8 +8,15 @@
 using namespace std;
 using namespace Eigen;
 
-CoupledCluster::CoupledCluster(MatrixXd *h, MatrixXd *tei){
+CoupledCluster::CoupledCluster(MatrixXd *hcore, MatrixXd *tei){
     molecularToMolecularSpin(this->TEI, tei);
-    SpinOrbitalFock(this->Fock, this->TEI, h);
+    SpinOrbitalFock(this->Fock, this->TEI, hcore);
 }
 
+CoupledCluster::SetInitialAmplitudes(){
+
+}
+
+CoupledCluster::EMP2(){
+
+}
