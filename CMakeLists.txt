@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 11)
 add_executable(HartreeFockMP2
         HartreeFock.cpp
         HartreeFock.hpp
+        CoupledCluster.cpp
+        CoupledCluster.hpp
         main.cpp
         QuantumUtils.cpp
         QuantumUtils.hpp

@@ -5,11 +5,43 @@
 using namespace std;
 using namespace Eigen;
 
+
+double**** allocate4DMatrix(int n) {
+    double**** W = new double*** [n];
+    for(int i=0; i < n; i++) {
+        W[i] = new double** [n];
+        for(int j=0; j < n; j++) {
+            W[i][j] = new double* [n];
+            for(int k=0; k < n; k++) {
+                W[i][j][k] = new double[n];
+            }
+        }
+    }
+    return W;
+}
+
+void delete4DMatrix(double**** W, int n) {
+    for(int i=0; i < n; i++) {
+        for(int j=0; j < n; j++) {
+            for(int k=0; k < n; k++) {
+                delete W[i][j][k];
+            }
+            delete W[i][j];
+        }
+        delete W[i];
+    }
+    delete W;
+}
+
 /** Diagonlizes S, such that S^-1/2 can be easily
 calculated as L * U^-1/2 * L where L are the
 evecs and U is the diagonal eigenvalue matrix
 **/
 void SymmetricOrthMatrix(MatrixXd *SOM, MatrixXd *S) {
+
+    if (S == NULL || SOM == NULL ){
+        throw invalid_argument( "received null pointer in SymmetricOrthMatrix" );
+    }
 
     int numOrb = (*S).rows();
     MatrixXd *eval = new MatrixXd(numOrb, numOrb);
@@ -31,6 +63,9 @@ Diagonalizes M, returning a matrix of right eigenvectors
 and a diagonal of eigenvalues
 **/
 void Diagonlize(MatrixXd *M, MatrixXd *evals, MatrixXd *evecs) {
+    if (evals == NULL || evecs == NULL || M == NULL ){
+        throw invalid_argument( "received null pointer in Diagonlize" );
+    }
     int numOrb = (*M).rows();
     SelfAdjointEigenSolver<MatrixXd> solver(*M);
     *evecs = solver.eigenvectors();
@@ -107,6 +142,9 @@ bool isNormalized(MatrixXd *M, MatrixXd *S){
 }
 
 void setzero(MatrixXd *M){
+    if (M == NULL){
+        throw invalid_argument( "received null pointer in setZero" );
+    }
   for (int i=0; i<M->rows(); i++){
       for (int j=0; j<M->cols(); j++){
         (*M)(i,j) = 0;
@@ -135,21 +173,30 @@ Molecular Spin Orbital Basis
 
 runtime : O(N^4)
 **/
-void molecularToMolecularSpin(MatrixXd *TEI_MOspin, MatrixXd *TEI_MO) {
+void molecularToMolecularSpin(MatrixXd *TEI_MOspin, MatrixXd *TEI_MO, int numOrb) {
+
+    if (TEI_MO == NULL || TEI_MOspin == NULL){
+        throw invalid_argument( "received null pointer in molecularToMolecularSpin" );
+    }
+
+    cout << (*TEI_MO) << endl;
+
   setzero(TEI_MOspin);
-  for (int p=0; p < NUM_ORB; p++) {
-    for (int q=0; q < NUM_ORB; q++) {
-      for (int r=0; r < NUM_ORB; r++) {
-        for (int s=0; s < NUM_ORB; s++) {
 
-          /**
-            even-numbered orbitals are spin up
-            odd-numbered are spin down
-          **/
+  for (int p=0; p < numOrb; p++) {
+    for (int q=0; q < numOrb; q++) {
+        int pq = compoundIndex(p/2,q/2);
 
-          int pr = compoundIndex(p/2,r/2);
-          int qs = compoundIndex(q/2,s/2);
-          int prqs = compoundIndex(pr,qs);
+        for (int r=0; r < numOrb; r++) {
+            for (int s=0; s < numOrb; s++) {
+                int rs = compoundIndex(r/2,s/2);
+              /**
+                even-numbered orbitals are spin up
+                odd-numbered are spin down
+              **/
+
+                int pqrs = compoundIndex(pq,rs);
+                (*TEI_MOspin)(pqrs) = (*TEI_MO)(pqrs) * (p%2 == r%2) * (q%2 == s%2);
 
           /**
             (p%2 == r%2) and (q%2 == s%2) factors checks
@@ -167,14 +214,6 @@ void molecularToMolecularSpin(MatrixXd *TEI_MOspin, MatrixXd *TEI_MO) {
                      =  TEI_MO(pqrs) * (p%2 == r%2) * (q%2 == s%2) -
                         TEI_MO(psqr) * (p%2 == s%2) * (r%2 == q%2)
           **/
-
-            int value1 = (*TEI_MO)(prqs) * (p%2 == r%2) * (q%2 == s%2);
-            int ps = compoundIndex(p/2,s/2);
-            int qr = compoundIndex(q/2,r/2);
-            int psqr = compoundIndex(ps,qr);
-            int value2 = (*TEI_MO)(psqr) * (p%2 == s%2) * (q%2 == r%2);
-
-            (*TEI_MOspin)(compoundIndex(compoundIndex(p,q),compoundIndex(r,s))) = value1 - value2;
 
         }
       }
@@ -224,6 +263,10 @@ void atomicToMolecularN8(MatrixXd *TEI_MO, MatrixXd *TEI_AO, MatrixXd *C0) {
  runtime : O(N^5)
  **/
 void atomicToMolecularN5(MatrixXd *TEI_MO, MatrixXd *TEI_AO, MatrixXd *C0) {
+
+      if (C0 == NULL || TEI_AO == NULL || TEI_MO == NULL){
+        throw invalid_argument( "received null pointer in atomicToMolecularN5" );
+      }
 
       int numOrb = (*C0).rows();
       MatrixXd* X = new MatrixXd(numOrb, numOrb);
@@ -283,10 +326,14 @@ void atomicToMolecularN5(MatrixXd *TEI_MO, MatrixXd *TEI_AO, MatrixXd *C0) {
 
   runtime : O(N_occ*N^2)
   **/
-void SpinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
+void spinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
 
     // Fij = hij + Sum over occupied orbitals <pm||qm>
     // where <pm||qm> = <pm|qm> - <pm|mq> = [pq|mm] - [pm|mq]
+    if (FSO == NULL || TEI_MOspin == NULL || h == NULL){
+        throw invalid_argument( "received null pointer in spinOrbitalFock" );
+    }
+
     int numOrb = (*h).rows();
 
     for (int p=0; p < numOrb; p++) {
@@ -305,18 +352,24 @@ void SpinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
     }
   }
 
-double MP2_Energy(MatrixXd *TEI_MO, MatrixXd *E) {
+double MP2_Energy(MatrixXd *TEI_MO, MatrixXd *E, int nElectrons) {
     // E are orbital Energy values
+
+    if (E == NULL || TEI_MO == NULL){
+        throw invalid_argument( "received null pointer in MP2_Energy" );
+    }
+
     double EMP2 = 0;
     int numOrb = (*E).rows();
+    int nOcc = nElectrons/2; // closed shell
     int ia, ja, jb, ib, iajb, ibja;
 
-    for (int i = 0; i< numOrb; i++){
-        for (int a = numOrb; a < numOrb; a++){
+    for (int i = 0; i < nOcc; i++){
+        for (int a = nOcc; a < numOrb; a++){
             ia = compoundIndex(i,a);
-            for (int j = 0; j< numOrb; j++){
+            for (int j = 0; j < nOcc ; j++){
                 ja = compoundIndex(j,a);
-                for (int b = numOrb; b < numOrb; b++){
+                for (int b = nOcc; b < numOrb; b++){
                     jb = compoundIndex(j,b);
                     ib = compoundIndex(i,b);
                     iajb = compoundIndex(ia,jb);
@@ -330,6 +383,10 @@ double MP2_Energy(MatrixXd *TEI_MO, MatrixXd *E) {
 }
 
 void copyMatrix(MatrixXd *M, MatrixXd *N) {
+
+    if (M == NULL || N == NULL){
+        throw invalid_argument( "received null pointer in copyMatrix" );
+    }
 
     if ((*M).rows() != (*N).rows() || (*M).cols() != (*N).cols()) {
         string msg = "Copy matrix must be of the same dimension : \n";
@@ -346,4 +403,25 @@ void copyMatrix(MatrixXd *M, MatrixXd *N) {
             (*N)(i,j) = (*M)(i,j);
         }
     }
+}
+
+double getExchangeIntegral(MatrixXd *TEI, int i, int j, int a, int b) {
+
+    if (TEI == NULL){
+        throw invalid_argument( "received null pointer in getExchangeIntegral" );
+    }
+
+    int iajb = compoundIndex(compoundIndex(i,a),compoundIndex(j,b));
+    int ibja = compoundIndex(compoundIndex(i,b),compoundIndex(j,a));
+    return (*TEI)(iajb) - (*TEI)(ibja);
+}
+
+void printMatrix(MatrixXd *M, string name){
+
+    if (M == NULL){
+        throw invalid_argument( "attemping to print an unset matrix" );
+    }
+
+    cout << "--------------------------------------------------------------------------------" << endl;
+    cout << name << " : " << (*M) << endl;
 }

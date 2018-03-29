@@ -10,6 +10,12 @@
 #include "Eigen/Core"
 #include "QuantumUtils.hpp"
 
+struct Geometry {
+    int natom;
+    int *zvals;
+    double **geom;
+};
+
 class READIN {
 
     public:
@@ -17,5 +23,6 @@ class READIN {
       static void val(const char *filename, int *val);
       static void SymMatrix(const char *filename, Eigen::MatrixXd *M);
       static void TEI(const char *filename, Eigen::MatrixXd *TEI);
+      static void geometry(const char *filename, struct Geometry *g);
 
 };
