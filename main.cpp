@@ -1,6 +1,9 @@
 
 #include "HartreeFock.hpp"
+#include "CoupledCluster.hpp"
+
 using namespace std;
+using namespace Eigen;
 
 int main(int argc, char **argv) {
 
@@ -13,6 +16,11 @@ int main(int argc, char **argv) {
     HartreeFock HF2(testCase, 1e-6, 1e-6);
     HF2.DIISIterate();
     HF2.MP2_Correction();
+
+    CCSD ccsd(HF1, 1e-6);
+    ccsd.Iterate();
+    double mp2 = ccsd.MP2Energy();
+    double corrE = ccsd.correlationEnergy();
 
     return 0;
 

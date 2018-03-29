@@ -17,11 +17,13 @@ using namespace Eigen;
 
 HartreeFock::HartreeFock(string basisSet, double tol_dens, double tol_e){
 
-    path = "data/" + basisSet + "/";
+    this->basisSet = basisSet;
+    this->path = "data/" + basisSet + "/";
+
     READIN::val((path + "nBasis.dat").c_str(), &numBasisFunc);
     READIN::val((path + "nElectrons.dat").c_str(), &numElectrons);
-    int temp = (numBasisFunc * (numBasisFunc + 1) / 2);
-    int numMulliken = ((temp + 1) * temp)/2;
+
+    int numMulliken = (((numBasisFunc * (numBasisFunc + 1) / 2) + 1) * (numBasisFunc * (numBasisFunc + 1) / 2))/2;
 
     S = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
     F0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
@@ -36,7 +38,7 @@ HartreeFock::HartreeFock(string basisSet, double tol_dens, double tol_e){
     e0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
     D0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
     prev_D0 = new Eigen::MatrixXd(numBasisFunc, numBasisFunc);
-    E = new Eigen::MatrixXd(numBasisFunc, 1);
+    orbitalE = new Eigen::MatrixXd(numBasisFunc, 1);
     TEI_AO = new Eigen::MatrixXd(numMulliken, 1);
     TEI_MO = new Eigen::MatrixXd(numMulliken, 1);
 
@@ -65,7 +67,7 @@ HartreeFock::~HartreeFock() {
     delete errorVec;
     delete T;
     delete Hcore;
-    delete E;
+    delete orbitalE;
     delete SOM;
     delete F0;
     delete FMO;
@@ -112,7 +114,7 @@ void HartreeFock::print_state() {
 }
 
 bool HartreeFock::EConverg(){
-    // checks for convergence of the engery value
+    // checks for convergence of the energy value
     delE = (prev_etot - etot);
     return (delE < tol_e);
 }
@@ -391,19 +393,25 @@ void HartreeFock::MullikenAnalysis(){
 
     // must know where each basis function is centered
     // this is not given !
+    if (basisSet.find("STO_3G") == string::npos) {
+        cout << "Insufficent information for basis set" << basisSet;
+        cout << " for Mulliken analysis" << endl;
+        exit(-1);
+    }
 
-    //Molecule mol("data/geom.txt", 0);
+    cout << "Assume H2O STO_3G as not generally implemented" << endl;
+    struct Geometry geomStruct;
+    READIN::geometry((path + "geom.dat").c_str(), &geomStruct);
+
     int q = 0 ;
-    int startOrb = 0;
-    int endOrb = startOrb + 2;
+    int orbitalNumbers[] = {0, 5, 6, 7}; // 0-5 oxygen, 5-6 hydrogen, 6-7 hygroden
 
     for (int i = 0; i < numBasisFunc; i ++) {
-        //q = mol.zvals[1];
-        for (int mu = startOrb; mu < endOrb; mu++) {
+        q = geomStruct.zvals[i];
+        for (int mu = orbitalNumbers[i]; mu < orbitalNumbers[i + 1]; mu++) {
             q = q - 2 * ((*D0) * (*S))(mu, mu);
         }
         cout << "Charge on atom " << i << " = \n\n" << q << endl;
-        startOrb = endOrb;
     }
 }
 
@@ -411,8 +419,8 @@ void HartreeFock::MP2_Correction(){
 
     Set_MOBasisFock();
     Set_OrbitalEnergy();
-    atomicToMolecularN8(TEI_MO, TEI_AO, C0);
-    EMP2 = MP2_Energy(TEI_MO, E, numElectrons);
+    atomicToMolecularN5(TEI_MO, TEI_AO, C0);
+    EMP2 = MP2_Energy(TEI_MO, orbitalE, numElectrons);
     cout.precision(PRECISION);
     cout << "--------------------------------------------------------------------------------" << endl;
     cout << "MP2 Correction Energy :" << EMP2 << endl;
@@ -426,6 +434,6 @@ void HartreeFock::Set_OrbitalEnergy(){
     // Diagonal Elements of The Fock Operator
     // in the MO Bais are the orbital Energy values
     for (int i = 0; i< numBasisFunc; i++) {
-        (*E)(i) = (*FMO)(i,i);
+        (*orbitalE)(i) = (*FMO)(i,i);
     }
 }
