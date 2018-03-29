@@ -17,6 +17,15 @@ double**** allocate4DMatrix(int n) {
             }
         }
     }
+    for(int i=0; i < n; i++) {
+        for(int j=0; j < n; j++) {
+            for(int k=0; k < n; k++) {
+                for(int l=0; l < n; l++) {
+                    W[i][j][k][l] = 0;
+                }
+            }
+        }
+    }
     return W;
 }
 
@@ -172,39 +181,13 @@ Molecular Spin Orbital Basis
   alternating between spins
 
 runtime : O(N^4)
-**/
-void molecularToMolecularSpin(MatrixXd *TEI_MOspin, MatrixXd *TEI_MO, int numOrb) {
 
-    if (TEI_MO == NULL || TEI_MOspin == NULL){
-        throw invalid_argument( "received null pointer in molecularToMolecularSpin" );
-    }
-
-    cout << (*TEI_MO) << endl;
-
-  setzero(TEI_MOspin);
-
-  for (int p=0; p < numOrb; p++) {
-    for (int q=0; q < numOrb; q++) {
-        int pq = compoundIndex(p/2,q/2);
-
-        for (int r=0; r < numOrb; r++) {
-            for (int s=0; s < numOrb; s++) {
-                int rs = compoundIndex(r/2,s/2);
-              /**
-                even-numbered orbitals are spin up
-                odd-numbered are spin down
-              **/
-
-                int pqrs = compoundIndex(pq,rs);
-                (*TEI_MOspin)(pqrs) = (*TEI_MO)(pqrs) * (p%2 == r%2) * (q%2 == s%2);
-
-          /**
             (p%2 == r%2) and (q%2 == s%2) factors checks
             if the spin of the two AO wavefunctions for
             each cordinate are equal, as if they are not,
             the < pq | rs > value would be zero.
 
-            @notation : <pq||rs> = =  <pq|rs> - <ps|qr> = spin orbital TEI (MO basis)
+            @notation : <pq||rs> = <pq|rs> - <ps|qr> = spin orbital TEI (MO basis)
             @notation : (pq|rs) = orbital TEI (MO basis)
 
             <pq|rs> = (pq|rs) <spin_p|spin_r> <spin_q|spin_s>
@@ -213,12 +196,31 @@ void molecularToMolecularSpin(MatrixXd *TEI_MOspin, MatrixXd *TEI_MO, int numOrb
             <pq||rs> =  <pq|rs> - <ps|qr>
                      =  TEI_MO(pqrs) * (p%2 == r%2) * (q%2 == s%2) -
                         TEI_MO(psqr) * (p%2 == s%2) * (r%2 == q%2)
-          **/
 
-        }
-      }
+**/
+void molecularToMolecularSpin(double ****TEI_MOspin, MatrixXd *TEI_MO, int numOrb) {
+
+    if (TEI_MO == NULL || TEI_MOspin == NULL){
+        throw invalid_argument( "received null pointer in molecularToMolecularSpin" );
     }
-  }
+    /**
+        assumes
+        even-numbered orbitals are spin up
+        odd-numbered are spin down
+    **/
+
+    for (int p=0; p < numOrb; p++) {
+        for (int q=0; q < numOrb; q++) {
+            int pq = compoundIndex(p, q);
+            for (int r=0; r < numOrb; r++) {
+                for (int s=0; s < numOrb; s++) {
+                    int rs = compoundIndex(r, s);
+                    int pqrs = compoundIndex(pq,rs);
+                    TEI_MOspin[p][q][r][s] = (*TEI_MO)(pqrs) * (p%2 == r%2) * (q%2 == s%2);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -316,7 +318,6 @@ void atomicToMolecularN5(MatrixXd *TEI_MO, MatrixXd *TEI_AO, MatrixXd *C0) {
 
   }
 
-
 /**
   Creates the Spin Orbital Fock Matrix, given a set of TEI
   in the Spin Orbital Basis and the one elctron hamiltonian
@@ -326,7 +327,7 @@ void atomicToMolecularN5(MatrixXd *TEI_MO, MatrixXd *TEI_AO, MatrixXd *C0) {
 
   runtime : O(N_occ*N^2)
   **/
-void spinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
+void spinOrbitalFock(MatrixXd *FSO, double ****TEI_MOspin, MatrixXd *h, int numOcc) {
 
     // Fij = hij + Sum over occupied orbitals <pm||qm>
     // where <pm||qm> = <pm|qm> - <pm|mq> = [pq|mm] - [pm|mq]
@@ -341,12 +342,8 @@ void spinOrbitalFock(MatrixXd *FSO, MatrixXd *TEI_MOspin, MatrixXd *h) {
 
         (*FSO)(p,q) = (*h)(p,q); // one electron hamiltonians
 
-        for(int m=0; m < NUM_OCC; m++) {
-
-          int pmqm = compoundIndex(compoundIndex(p,m),compoundIndex(q,m));
-          int pqmm = compoundIndex(compoundIndex(p,q),compoundIndex(m,m));
-          (*FSO)(p,q) += ((*TEI_MOspin)(pqmm) - (*TEI_MOspin)(pmqm));
-
+        for(int m=0; m < numOcc; m++) {
+          (*FSO)(p,q) += getExchangeIntegral(TEI_MOspin, p, m, q, m);
         }
       }
     }
@@ -414,6 +411,14 @@ double getExchangeIntegral(MatrixXd *TEI, int i, int j, int a, int b) {
     int iajb = compoundIndex(compoundIndex(i,a),compoundIndex(j,b));
     int ibja = compoundIndex(compoundIndex(i,b),compoundIndex(j,a));
     return (*TEI)(iajb) - (*TEI)(ibja);
+}
+
+double getExchangeIntegral(double ****TEI, int i, int j, int a, int b) {
+
+    if (TEI == NULL){
+        throw invalid_argument( "received null pointer in getExchangeIntegral" );
+    }
+    return TEI[i][a][j][b] - TEI[i][b][j][a];
 }
 
 void printMatrix(MatrixXd *M, string name){

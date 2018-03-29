@@ -16,7 +16,7 @@ class CCSD{
 
 private:
     Eigen::MatrixXd *Fock;
-    Eigen::MatrixXd *TEI;
+    double ****TEI;
 
     Eigen::MatrixXd *tau;
     Eigen::MatrixXd *tautilda;

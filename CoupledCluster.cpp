@@ -29,13 +29,11 @@ CCSD::CCSD(HartreeFock HF, double tolerance_e) {
     this->tautilda = new MatrixXd(numOrb * numOrb, numOrb * numOrb);
     this->F = new MatrixXd(numOrb, numOrb);
     this->Fock = new MatrixXd(numOrb, numOrb);
-    this->TEI = new MatrixXd(HF.TEI_MO->rows(), HF.TEI_MO->cols());
+    this->TEI = allocate4DMatrix(numOrb);
     this->W = allocate4DMatrix(numOrb);
 
     molecularToMolecularSpin(this->TEI, HF.TEI_MO, numOrb);
-    printMatrix(TEI, "TEI");
-    spinOrbitalFock(this->Fock, this->TEI, HF.Hcore);
-    printMatrix(Fock, "Fock");
+    spinOrbitalFock(this->Fock, this->TEI, HF.Hcore, numOcc);
 
     setDenominatorArrays();
     setInitialAmplitudes(HF.orbitalE);
@@ -53,7 +51,6 @@ void CCSD::printState(){
     printMatrix(tau, "tau");
     printMatrix(F, "F");
     printMatrix(Fock, "Fock");
-    printMatrix(TEI, "TEI");
     printMatrix(D_1d, "D1d");
     printMatrix(D_2d, "D2d");
 
@@ -64,7 +61,7 @@ CCSD::~CCSD(){
     delete tautilda;
     delete F;
     delete Fock;
-    delete TEI;
+    delete4DMatrix(TEI, numOrb);
     delete4DMatrix(W, numOrb);
 }
 
@@ -77,7 +74,7 @@ void CCSD::Iterate(){
         setIntermediates();
         updateAmplitudes();
         prevE = E;
-        E = correlationEnergy();
+         E = correlationEnergy();
         cout << E << "\t\t" << it << endl;
     }
 }
